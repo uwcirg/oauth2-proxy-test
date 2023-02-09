@@ -54,6 +54,7 @@ services:
       - "--upstream=static://202"
       # - "--whitelist-domain=.<REDACTED>"
       # - "--whitelist-domain=.fsn1.<REDACTED>"
+      - "--skip-jwt-bearer-tokens=true"
     environment:
       OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
       OAUTH2_PROXY_PROVIDER: oidc
