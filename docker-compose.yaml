@@ -159,6 +159,35 @@ services:
     networks:
       # ingress:
       internal:
+
+  keycloak:
+    image: jboss/keycloak:${KEYCLOAK_IMAGE_TAG:-15.0.2}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.rule=Host(`keycloak.${IP:-128.208.230.197}`)"
+      - "traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.keycloak-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+    environment:
+      KEYCLOAK_FRONTEND_URL: "https://keycloak.${IP:-128.208.230.197}/auth"
+      PROXY_ADDRESS_FORWARDING: "true"
+      DB_VENDOR: postgres
+      DB_ADDR: postgres
+      DB_PORT: 5432
+      DB_DATABASE: keycloak
+      DB_USER: app_user
+      DB_PASSWORD: secret
+      # https://nvd.nist.gov/vuln/detail/CVE-2021-44228
+      LOG4J_FORMAT_MSG_NO_LOOKUPS: "true"
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+
+    depends_on:
+      - postgres
+    networks:
+      - ingress
+      - internal
+
 volumes:
   postgres-data: {}
 
