@@ -1,7 +1,7 @@
 version: '3.9'
 services:
 
-  oauth2-proxy:
+  auth-proxy:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
     restart: unless-stopped
     command:
@@ -29,7 +29,7 @@ services:
       # OAUTH2_PROXY_REDIRECT_URL: http://auth-proxy-${COMPOSE_PROJECT_NAME}:4180/oauth2/callback
       # OAUTH2_PROXY_REDIRECT_URL: http://oauth:4180/oauth2/callback
       # OAUTH2_PROXY_REDIRECT_URL: https://${SERVER_NAME}/oauth2/callback
-      OAUTH2_PROXY_REDIRECT_URL: https://oauth2-proxy.128.208.230.197.nip.io/oauth2/callback
+      OAUTH2_PROXY_REDIRECT_URL: https://auth-proxy.128.208.230.197.nip.io/oauth2/callback
       OAUTH2_PROXY_CLIENT_ID: auth_proxy_test
       OAUTH2_PROXY_CLIENT_SECRET: 74c6fdc4-4086-4a21-bf40-49c7ee74357e
       OAUTH2_PROXY_REVERSE_PROXY: "true"
@@ -38,23 +38,23 @@ services:
 
     labels:
       "traefik.enable": "true"
-      traefik.http.routers.oauth2-proxy.rule: Host(`oauth2-proxy.128.208.230.197.nip.io`) || PathPrefix(`/oauth2`)
-      traefik.http.routers.oauth2-proxy.middlewares: auth-headers
-      traefik.http.routers.oauth2-proxy.tls: 'true'
-      traefik.http.routers.oauth2-proxy.tls.certresolver: letsencrypt
-      traefik.http.routers.oauth2-proxy.entrypoints: "websecure"
+      traefik.http.routers.auth-proxy.rule: Host(`auth-proxy.128.208.230.197.nip.io`) || PathPrefix(`/oauth2`)
+      traefik.http.routers.auth-proxy.middlewares: auth-headers
+      traefik.http.routers.auth-proxy.tls: 'true'
+      traefik.http.routers.auth-proxy.tls.certresolver: letsencrypt
+      traefik.http.routers.auth-proxy.entrypoints: "websecure"
       
       traefik.http.middlewares.auth-headers.headers.sslRedirect: 'true'
       traefik.http.middlewares.auth-headers.headers.stsSeconds: '315360000'
       traefik.http.middlewares.auth-headers.headers.browserXssFilter: 'true'
       traefik.http.middlewares.auth-headers.headers.contentTypeNosniff: 'true'
       traefik.http.middlewares.auth-headers.headers.forceSTSHeader: 'true'
-      traefik.http.middlewares.auth-headers.headers.sslHost: oauth2-proxy.128.208.230.197.nip.io
+      traefik.http.middlewares.auth-headers.headers.sslHost: auth-proxy.128.208.230.197.nip.io
       traefik.http.middlewares.auth-headers.headers.stsIncludeSubdomains: 'true'
       traefik.http.middlewares.auth-headers.headers.stsPreload: 'true'
       traefik.http.middlewares.auth-headers.headers.frameDeny: 'true'
       
-      traefik.http.middlewares.github-auth.forwardAuth.address: http://oauth2-proxy:4180/
+      traefik.http.middlewares.github-auth.forwardAuth.address: http://auth-proxy:4180/
       traefik.http.middlewares.github-auth.forwardAuth.trustForwardHeader: 'true'
       traefik.http.middlewares.github-auth.forwardAuth.authResponseHeaders: X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Access-Token,Authorization
     networks:
