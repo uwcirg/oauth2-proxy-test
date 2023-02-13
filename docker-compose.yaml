@@ -1,59 +1,11 @@
 version: '3.9'
-
-x-orig:
-  traefik:
-    image: traefik:v2.8
-    restart: unless-stopped
-    command: 
-      - "--accesslog=true"
-      - "--providers.docker"
-      - "--api.dashboard=true"
-      - "--experimental.http3=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.websecure.http.tls=true"
-      - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
-      - "--entrypoints.websecure.http3.advertisedPort=443"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-
-    ports:
-      - "80:80/tcp"
-      - "443:443/tcp"
-      - "443:443/udp"
-
-    labels:
-      traefik.http.routers.traefik.rule: Host(`traefik.fsn1.<REDACTED>`)
-      traefik.http.routers.traefik.middlewares: github-auth
-      traefik.http.routers.traefik.service: api@internal
-
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "traefik_data:/data"
 services:
 
   oauth2-proxy:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
     restart: unless-stopped
     command:
-      # - "--client-id=${OAUTH_CLIENT_ID}"
-      # - "--client-secret=${OAUTH_CLIENT_SECRET}"
-      # - "--cookie-domain=.nip.io"
-      # - "--cookie-name=_auth_9668c2cf"
-      # - "--cookie-secret=${OAUTH_COOKIE_SECRET}"
-      # - "--email-domain=*"
-      # - "--http-address=http://[::]:4180"
-      # - "--reverse-proxy=true"
-      # - "--redirect-url=https://auth.fsn1.<REDACTED>/oauth2/callback"
-      # - "--scope=user:email"
-      # - "--set-xauthrequest=true"
       - "--upstream=static://202"
-      # - "--whitelist-domain=.<REDACTED>"
-      # - "--whitelist-domain=.fsn1.<REDACTED>"
       - "--skip-jwt-bearer-tokens=true"
     environment:
       OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
@@ -162,15 +114,9 @@ services:
 volumes:
   postgres-data: {}
 
-
-
-
-
 networks:
   # internal network for backing services
   internal:
-
-
 
   # ingress network
   ingress:
