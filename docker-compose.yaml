@@ -14,7 +14,8 @@ services:
       OAUTH2_PROXY_OIDC_ISSUER_URL: https://keycloak.128.208.230.197.nip.io/auth/realms/fEMR
       OAUTH2_PROXY_EMAIL_DOMAINS: "*"
       OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL: "true"
-      OAUTH2_PROXY_USER_ID_CLAIM: "preferred_username"
+      # claim to base cookie on; Keycloak account email not always set
+      OAUTH2_PROXY_USER_ID_CLAIM: preferred_username
       OAUTH2_PROXY_SCOPE: openid profile email
       OAUTH2_PROXY_COOKIE_DOMAINS: .128.208.230.197.nip.io
       OAUTH2_PROXY_WHITELIST_DOMAINS: .128.208.230.197.nip.io
