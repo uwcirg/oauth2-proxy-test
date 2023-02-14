@@ -41,10 +41,6 @@ services:
       OAUTH2_PROXY_COOKIE_SECRET: OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w=
       OAUTH2_PROXY_WHITELIST_DOMAINS: .128.208.230.197.nip.io
 
-    # oauth2-proxy image does not include any EXPOSE directives
-    expose:
-      - 4180
-
     labels:
       traefik.enable: "true"
       traefik.http.routers.auth-proxy.rule: Host(`auth-proxy.128.208.230.197.nip.io`) || PathPrefix(`/oauth2`)
@@ -52,6 +48,7 @@ services:
       traefik.http.routers.auth-proxy.entrypoints: websecure
       traefik.http.routers.auth-proxy.tls.certresolver: letsencrypt
       traefik.http.routers.auth-proxy.tls: "true"
+      traefik.http.services.auth-proxy.loadbalancer.server.port: 4180
 
       # TODO move to common config
       # best-practice HTTPS headers
