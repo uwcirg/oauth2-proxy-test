@@ -33,8 +33,9 @@ services:
       OAUTH2_PROXY_CLIENT_ID: auth_proxy_test
       OAUTH2_PROXY_CLIENT_SECRET: 74c6fdc4-4086-4a21-bf40-49c7ee74357e
       OAUTH2_PROXY_REVERSE_PROXY: "true"
+    # oauth2-proxy image does not include any EXPOSE directives
     expose:
-      - '4180'
+      - 4180
 
     labels:
       "traefik.enable": "true"
