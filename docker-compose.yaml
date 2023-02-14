@@ -44,6 +44,7 @@ services:
       traefik.http.routers.auth-proxy.tls.certresolver: letsencrypt
       traefik.http.routers.auth-proxy.entrypoints: "websecure"
       
+      # best-practice HTTPS headers
       traefik.http.middlewares.auth-headers.headers.sslRedirect: 'true'
       traefik.http.middlewares.auth-headers.headers.stsSeconds: '315360000'
       traefik.http.middlewares.auth-headers.headers.browserXssFilter: 'true'
