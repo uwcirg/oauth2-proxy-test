@@ -6,7 +6,6 @@ services:
     restart: unless-stopped
     command:
       - "--upstream=static://202"
-      - "--skip-jwt-bearer-tokens=true"
     environment:
       OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
       OAUTH2_PROXY_PROVIDER: oidc
@@ -30,6 +29,9 @@ services:
       OAUTH2_PROXY_CLIENT_ID: auth_proxy_test
       OAUTH2_PROXY_CLIENT_SECRET: 74c6fdc4-4086-4a21-bf40-49c7ee74357e
       OAUTH2_PROXY_REVERSE_PROXY: "true"
+      # allow validation of JWTs in Authorization HTTP header
+      # https://medium.com/in-the-weeds/service-to-service-authentication-on-kubernetes-94dcb8216cdc#20d0
+      OAUTH2_PROXY_SKIP_JWT_BEARER_TOKENS: "true"
     # oauth2-proxy image does not include any EXPOSE directives
     expose:
       - 4180
