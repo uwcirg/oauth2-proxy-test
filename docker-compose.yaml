@@ -50,6 +50,7 @@ services:
       traefik.http.routers.auth-proxy.rule: Host(`auth-proxy.128.208.230.197.nip.io`) || PathPrefix(`/oauth2`)
       traefik.http.routers.auth-proxy.middlewares: auth-headers
       traefik.http.routers.auth-proxy.entrypoints: websecure
+      traefik.http.routers.auth-proxy.tls.certresolver: letsencrypt
       traefik.http.routers.auth-proxy.tls: "true"
 
       # TODO move to common config
@@ -78,6 +79,7 @@ services:
       traefik.http.routers.whoami.rule: Host(`whoami.128.208.230.197.nip.io`)
       traefik.http.routers.whoami.middlewares: oidc-auth
       traefik.http.routers.whoami.entrypoints: websecure
+      traefik.http.routers.whoami.tls.certresolver: letsencrypt
       traefik.http.routers.whoami.tls: "true"
       traefik.http.services.whoami.loadbalancer.server.port: 80
     networks:
@@ -98,6 +100,7 @@ services:
       traefik.http.routers.postgrest.rule: "Host(`postgrest.128.208.230.197.nip.io`)"
       traefik.http.routers.postgrest.middlewares: oidc-auth
       traefik.http.routers.postgrest.entrypoints: websecure
+      traefik.http.routers.postgrest.tls.certresolver: letsencrypt
       traefik.http.routers.postgrest.tls: "true"
       traefik.http.services.postgrest.loadbalancer.server.port: 3000
     networks:
