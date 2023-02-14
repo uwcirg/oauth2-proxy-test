@@ -103,8 +103,6 @@ services:
     networks:
       ingress:
       internal:
-    ports:
-      - 3000:3000
 
   postgres:
     image: postgres:${POSTGRES_IMAGE_TAG:-12}
