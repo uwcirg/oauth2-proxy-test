@@ -105,7 +105,7 @@ services:
       internal:
 
   postgres:
-    image: postgres:${POSTGRES_IMAGE_TAG:-12}
+    image: postgres:${POSTGRES_IMAGE_TAG:-15}
     restart: unless-stopped
     environment:
       POSTGRES_DB: app_db
