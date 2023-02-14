@@ -5,6 +5,8 @@ services:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
     restart: unless-stopped
     command:
+      # when authenticated, return a static 202 response
+      # https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#forwardauth-with-static-upstreams-configuration
       - --upstream=static://202
     environment:
       OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
