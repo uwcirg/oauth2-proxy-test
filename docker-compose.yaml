@@ -50,6 +50,12 @@ services:
       traefik.http.routers.auth-proxy.tls: "true"
       traefik.http.services.auth-proxy.loadbalancer.server.port: 4180
 
+      traefik.http.middlewares.oidc-auth.forwardAuth.address: http://auth-proxy:4180/
+      traefik.http.middlewares.oidc-auth.forwardAuth.trustForwardHeader: "true"
+      # TODO block Authorization header for postgrest using custom middleware
+      traefik.http.middlewares.oidc-auth.forwardAuth.authResponseHeaders: X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Access-Token,Authorization
+
+
       # TODO move to common config
       # best-practice HTTPS headers
       traefik.http.middlewares.auth-headers.headers.forceSTSHeader: "true"
@@ -61,11 +67,6 @@ services:
       traefik.http.middlewares.auth-headers.headers.browserXssFilter: "true"
       traefik.http.middlewares.auth-headers.headers.contentTypeNosniff: "true"
       traefik.http.middlewares.auth-headers.headers.frameDeny: "true"
-
-      traefik.http.middlewares.oidc-auth.forwardAuth.address: http://auth-proxy:4180/
-      traefik.http.middlewares.oidc-auth.forwardAuth.trustForwardHeader: "true"
-      # TODO block Authorization header for postgrest using custom middleware
-      traefik.http.middlewares.oidc-auth.forwardAuth.authResponseHeaders: X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Access-Token,Authorization
     networks:
       ingress:
       internal:
