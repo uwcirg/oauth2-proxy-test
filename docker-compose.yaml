@@ -3,10 +3,6 @@ services:
   auth-proxy:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
     restart: unless-stopped
-    command:
-      # when authenticated, return a static 202 response
-      # https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#forwardauth-with-static-upstreams-configuration
-      - --upstream=static://202
     environment:
       # service settings
       OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
@@ -19,6 +15,10 @@ services:
       # allow validation of JWTs in Authorization HTTP header
       # https://medium.com/in-the-weeds/service-to-service-authentication-on-kubernetes-94dcb8216cdc#20d0
       OAUTH2_PROXY_SKIP_JWT_BEARER_TOKENS: "true"
+
+      # when authenticated, return a static 202 response
+      # https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#forwardauth-with-static-upstreams-configuration
+      OAUTH2_PROXY_UPSTREAMS: static://202
 
       # general cookie settings
       OAUTH2_PROXY_EMAIL_DOMAINS: "*"
