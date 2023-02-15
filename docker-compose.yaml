@@ -98,10 +98,16 @@ services:
     labels:
       traefik.enable: "true"
       traefik.http.routers.postgrest.rule: Host(`postgrest.${IP}.nip.io`)
-      traefik.http.routers.postgrest.middlewares: oidc-auth
+      # chain postgrest-specifc middleware, after oidc-auth
+      traefik.http.routers.postgrest.middlewares: oidc-auth,remove-authz-header
       traefik.http.routers.postgrest.entrypoints: websecure
       traefik.http.routers.postgrest.tls.certresolver: letsencrypt
       traefik.http.routers.postgrest.tls: "true"
+
+      # unset Authorization header on all requests to postgrest
+      # postgrest implements its own auth which conflicts with oauth2-proxy
+      traefik.http.middlewares.remove-authz-header.headers.customrequestheaders.Authorization: ""
+
     networks:
       ingress:
       internal:
