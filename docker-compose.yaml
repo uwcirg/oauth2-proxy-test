@@ -25,7 +25,7 @@ services:
       OAUTH2_PROXY_COOKIE_EXPIRE: 30m
       OAUTH2_PROXY_COOKIE_REFRESH: 1m
       OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL: "true"
-      # claim to base session cookie on; Keycloak account email not always set
+      # base session cookie on Keycloak username (email not always set in Keycloak)
       OAUTH2_PROXY_USER_ID_CLAIM: preferred_username
 
       # OIDC integration settings
