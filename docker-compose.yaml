@@ -1,128 +1,89 @@
-version: '3.9'
-
-x-orig:
-  traefik:
-    image: traefik:v2.8
-    restart: unless-stopped
-    command: 
-      - "--accesslog=true"
-      - "--providers.docker"
-      - "--api.dashboard=true"
-      - "--experimental.http3=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.websecure.http.tls=true"
-      - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
-      - "--entrypoints.websecure.http3.advertisedPort=443"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-
-    ports:
-      - "80:80/tcp"
-      - "443:443/tcp"
-      - "443:443/udp"
-
-    labels:
-      traefik.http.routers.traefik.rule: Host(`traefik.fsn1.<REDACTED>`)
-      traefik.http.routers.traefik.middlewares: github-auth
-      traefik.http.routers.traefik.service: api@internal
-
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "traefik_data:/data"
+version: "3.9"
 services:
-
-  oauth2-proxy:
+  auth-proxy:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.3.0
     restart: unless-stopped
-    command:
-      # - "--client-id=${OAUTH_CLIENT_ID}"
-      # - "--client-secret=${OAUTH_CLIENT_SECRET}"
-      # - "--cookie-domain=.nip.io"
-      # - "--cookie-name=_auth_9668c2cf"
-      # - "--cookie-secret=${OAUTH_COOKIE_SECRET}"
-      # - "--email-domain=*"
-      # - "--http-address=http://[::]:4180"
-      # - "--reverse-proxy=true"
-      # - "--redirect-url=https://auth.fsn1.<REDACTED>/oauth2/callback"
-      # - "--scope=user:email"
-      # - "--set-xauthrequest=true"
-      - "--upstream=static://202"
-      # - "--whitelist-domain=.<REDACTED>"
-      # - "--whitelist-domain=.fsn1.<REDACTED>"
-      - "--skip-jwt-bearer-tokens=true"
     environment:
+      # service settings
       OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
-      OAUTH2_PROXY_PROVIDER: oidc
-      OAUTH2_PROXY_PROVIDER_DISPLAY_NAME: Keeycloak
-      OAUTH2_PROXY_OIDC_ISSUER_URL: https://keycloak.${IP:-128.208.230.197}.nip.io/auth/realms/fEMR
-      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
-      OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL: "true"
-      OAUTH2_PROXY_USER_ID_CLAIM: "preferred_username"
-      OAUTH2_PROXY_SCOPE: openid profile email
-      OAUTH2_PROXY_COOKIE_DOMAINS: .${IP:-128.208.230.197}.nip.io
-      OAUTH2_PROXY_WHITELIST_DOMAINS: .${IP:-128.208.230.197}.nip.io
-      OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: "true"
-      OAUTH2_PROXY_PASS_ACCESS_TOKEN: "true"
-      OAUTH2_PROXY_PASS_USER_HEADERS: "true"
-      OAUTH2_PROXY_SET_AUTHORIZATION_HEADER: "true"
-      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
-      OAUTH2_PROXY_COOKIE_REFRESH: 1m
-      OAUTH2_PROXY_COOKIE_EXPIRE: 30m
-      OAUTH2_PROXY_COOKIE_SECRET: OQINaROshtE9TcZkNAm-5Zs2Pv3xaWytBmc5W7sPX7w=
-      # OAUTH2_PROXY_REDIRECT_URL: http://auth-proxy-${COMPOSE_PROJECT_NAME}:4180/oauth2/callback
-      # OAUTH2_PROXY_REDIRECT_URL: http://oauth:4180/oauth2/callback
-      # OAUTH2_PROXY_REDIRECT_URL: https://${SERVER_NAME}/oauth2/callback
-      OAUTH2_PROXY_REDIRECT_URL: https://oauth2-proxy.${IP:-128.208.230.197}.nip.io/oauth2/callback
-      OAUTH2_PROXY_CLIENT_ID: auth_proxy_test
-      OAUTH2_PROXY_CLIENT_SECRET: 74c6fdc4-4086-4a21-bf40-49c7ee74357e
       OAUTH2_PROXY_REVERSE_PROXY: "true"
-    expose:
-      - '4180'
+      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
+      OAUTH2_PROXY_SET_AUTHORIZATION_HEADER: "true"
+      OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: "true"
+      OAUTH2_PROXY_PASS_USER_HEADERS: "true"
+      OAUTH2_PROXY_PASS_ACCESS_TOKEN: "true"
+      # allow validation of JWTs in Authorization HTTP header
+      # https://medium.com/in-the-weeds/service-to-service-authentication-on-kubernetes-94dcb8216cdc#20d0
+      OAUTH2_PROXY_SKIP_JWT_BEARER_TOKENS: "true"
+
+      # when authenticated, return a static 202 response
+      # https://oauth2-proxy.github.io/oauth2-proxy/docs/configuration/overview/#forwardauth-with-static-upstreams-configuration
+      OAUTH2_PROXY_UPSTREAMS: static://202
+
+      # general cookie settings
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_COOKIE_EXPIRE: 30m
+      OAUTH2_PROXY_COOKIE_REFRESH: 1m
+      OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL: "true"
+      # base session cookie on Keycloak username (email not always set in Keycloak)
+      OAUTH2_PROXY_USER_ID_CLAIM: preferred_username
+
+      # OIDC integration settings
+      OAUTH2_PROXY_PROVIDER: oidc
+      OAUTH2_PROXY_SCOPE: openid profile email
+      OAUTH2_PROXY_OIDC_ISSUER_URL: https://keycloak.${IP}.nip.io/auth/realms/fEMR
+      OAUTH2_PROXY_CLIENT_ID: ${OAUTH2_PROXY_CLIENT_ID}
+      OAUTH2_PROXY_CLIENT_SECRET: ${OAUTH2_PROXY_CLIENT_SECRET}
+
+      # security settings
+      OAUTH2_PROXY_COOKIE_DOMAINS: .${IP}.nip.io
+      OAUTH2_PROXY_WHITELIST_DOMAINS: .${IP}.nip.io
+      OAUTH2_PROXY_COOKIE_SECRET: ${OAUTH2_PROXY_COOKIE_SECRET}
 
     labels:
-      "traefik.enable": "true"
-      traefik.http.routers.oauth2-proxy.rule: Host(`oauth2-proxy.${IP:-128.208.230.197}.nip.io`) || PathPrefix(`/oauth2`)
-      traefik.http.routers.oauth2-proxy.middlewares: auth-headers
-      traefik.http.routers.oauth2-proxy.tls: 'true'
-      traefik.http.routers.oauth2-proxy.tls.certresolver: letsencrypt
-      traefik.http.routers.oauth2-proxy.entrypoints: "websecure"
-      
-      traefik.http.middlewares.auth-headers.headers.sslRedirect: 'true'
-      traefik.http.middlewares.auth-headers.headers.stsSeconds: '315360000'
-      traefik.http.middlewares.auth-headers.headers.browserXssFilter: 'true'
-      traefik.http.middlewares.auth-headers.headers.contentTypeNosniff: 'true'
-      traefik.http.middlewares.auth-headers.headers.forceSTSHeader: 'true'
-      traefik.http.middlewares.auth-headers.headers.sslHost: oauth2-proxy.${IP:-128.208.230.197}.nip.io
-      traefik.http.middlewares.auth-headers.headers.stsIncludeSubdomains: 'true'
-      traefik.http.middlewares.auth-headers.headers.stsPreload: 'true'
-      traefik.http.middlewares.auth-headers.headers.frameDeny: 'true'
-      
-      traefik.http.middlewares.github-auth.forwardAuth.address: http://oauth2-proxy:4180/
-      traefik.http.middlewares.github-auth.forwardAuth.trustForwardHeader: 'true'
-      traefik.http.middlewares.github-auth.forwardAuth.authResponseHeaders: X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Access-Token,Authorization
+      traefik.enable: "true"
+      traefik.http.routers.auth-proxy.rule: Host(`auth-proxy.${IP}.nip.io`) || PathPrefix(`/oauth2`)
+      traefik.http.routers.auth-proxy.middlewares: auth-headers
+      traefik.http.routers.auth-proxy.entrypoints: websecure
+      traefik.http.routers.auth-proxy.tls.certresolver: letsencrypt
+      traefik.http.routers.auth-proxy.tls: "true"
+
+      # oauth2-proxy does not EXPOSE the ports it listens on, requiring explicit traefik configuration
+      traefik.http.services.auth-proxy.loadbalancer.server.port: 4180
+
+      traefik.http.middlewares.oidc-auth.forwardAuth.address: http://auth-proxy:4180/
+      traefik.http.middlewares.oidc-auth.forwardAuth.trustForwardHeader: "true"
+      # TODO block Authorization header for postgrest using custom middleware
+      traefik.http.middlewares.oidc-auth.forwardAuth.authResponseHeaders: X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Access-Token,Authorization
+
+
+      # TODO move to common config
+      # best-practice HTTPS headers
+      traefik.http.middlewares.auth-headers.headers.forceSTSHeader: "true"
+      traefik.http.middlewares.auth-headers.headers.sslHost: auth-proxy.${IP}.nip.io
+      traefik.http.middlewares.auth-headers.headers.stsIncludeSubdomains: "true"
+      traefik.http.middlewares.auth-headers.headers.stsPreload: "true"
+      traefik.http.middlewares.auth-headers.headers.sslRedirect: "true"
+      traefik.http.middlewares.auth-headers.headers.stsSeconds: 315360000
+      traefik.http.middlewares.auth-headers.headers.browserXssFilter: "true"
+      traefik.http.middlewares.auth-headers.headers.contentTypeNosniff: "true"
+      traefik.http.middlewares.auth-headers.headers.frameDeny: "true"
     networks:
       ingress:
       internal:
 
   whoami:
-    image: "containous/whoami"
+    image: containous/whoami
     labels:
-      "traefik.enable": "true"
-      traefik.http.routers.whoami.rule: Host(`whoami.${IP:-128.208.230.197}.nip.io`)
-      traefik.http.routers.whoami.middlewares: github-auth
-      "traefik.http.services.whoami.loadbalancer.server.port": "80"
-      "traefik.http.routers.whoami.entrypoints": "websecure"
-      "traefik.http.routers.whoami.tls": "true"
+      traefik.enable: "true"
+      traefik.http.routers.whoami.rule: Host(`whoami.${IP}.nip.io`)
+      traefik.http.routers.whoami.middlewares: oidc-auth
+      traefik.http.routers.whoami.entrypoints: websecure
+      traefik.http.routers.whoami.tls.certresolver: letsencrypt
+      traefik.http.routers.whoami.tls: "true"
     networks:
       ingress:
       internal:
-####
-
 
   postgrest:
     image: postgrest/postgrest
@@ -134,20 +95,24 @@ services:
     depends_on:
       - postgres
     labels:
-      "traefik.enable": "true"
-      "traefik.http.routers.postgrest.rule": "Host(`postgrest.${IP:-128.208.230.197}.nip.io`)"
-      "traefik.http.routers.postgrest.entrypoints": "websecure"
-      "traefik.http.routers.postgrest.tls": "true"
-      traefik.http.routers.postgrest.middlewares: github-auth
-      "traefik.http.services.postgrest.loadbalancer.server.port": "3000"
+      traefik.enable: "true"
+      traefik.http.routers.postgrest.rule: Host(`postgrest.${IP}.nip.io`)
+      # chain postgrest-specifc middleware, after oidc-auth
+      traefik.http.routers.postgrest.middlewares: oidc-auth,remove-authz-header
+      traefik.http.routers.postgrest.entrypoints: websecure
+      traefik.http.routers.postgrest.tls.certresolver: letsencrypt
+      traefik.http.routers.postgrest.tls: "true"
+
+      # unset Authorization header on all requests to postgrest
+      # postgrest implements its own auth which conflicts with oauth2-proxy
+      traefik.http.middlewares.remove-authz-header.headers.customrequestheaders.Authorization: ""
+
     networks:
       ingress:
       internal:
-    ports:
-      - 3000:3000
 
   postgres:
-    image: postgres:${POSTGRES_IMAGE_TAG:-12}
+    image: postgres:${POSTGRES_IMAGE_TAG:-15}
     restart: unless-stopped
     environment:
       POSTGRES_DB: app_db
@@ -155,25 +120,21 @@ services:
       POSTGRES_PASSWORD: secret
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
-      # ingress:
       internal:
+
 volumes:
   postgres-data: {}
-
-
-
-
 
 networks:
   # internal network for backing services
   internal:
 
-
-
   # ingress network
   ingress:
     name: external_web
+    # TODO find fix
+    # `docker-compose` expects string, `docker compose` expects boolean
     # external: "true"
     external: true
